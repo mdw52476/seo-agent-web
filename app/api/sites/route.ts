@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { execSync } from 'child_process'
+import { execSync, spawn } from 'child_process'
 import { supabase } from '../../lib/supabase'
 
 export async function GET() {
@@ -53,6 +53,19 @@ export async function POST(req: NextRequest) {
   // Upsert into Supabase
   const { error } = await supabase.from('sites').upsert(siteToDb(site))
   if (error) console.error('Supabase upsert error:', error)
+
+  // Fire-and-forget: build site knowledge profile in the background
+  const isNewSite = !fs.existsSync(path.join(site.agentRoot, 'site-profile.json'))
+  if (isNewSite) {
+    const child = spawn('npx', ['tsx', 'src/index.ts', 'analyze', site.url], {
+      cwd: site.agentRoot,
+      env: { ...process.env, FORCE_COLOR: '0' },
+      shell: true,
+      detached: true,
+      stdio: 'ignore',
+    })
+    child.unref()
+  }
 
   return NextResponse.json({ ok: true, agentRoot: site.agentRoot })
 }
