@@ -191,7 +191,7 @@ export default function AddSiteModal({ onAdd, onClose }: Props) {
                 </button>
               </div>
               {envField('GITHUB_CONTENT_PATH', 'Blog posts path', 'text', siteType === 'nextjs' ? 'content/posts' : 'blog')}
-              {envField('GITHUB_DIRECTORY_PATH', 'City directories path', 'text', siteType === 'nextjs' ? 'content/directories' : 'directories')}
+              {envField('GITHUB_DIRECTORY_PATH', 'Directories path', 'text', siteType === 'nextjs' ? 'content/directories' : 'directories')}
             </>
           )}
         </div>
