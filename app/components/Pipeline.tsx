@@ -20,7 +20,7 @@ const STAGES: Stage[] = [
   { id: 'research', label: 'Research keywords',   desc: 'Generate and score keyword list',          cmd: (url) => `research ${url}` },
   { id: 'plan',     label: 'Plan content',        desc: 'Build a 4-week content calendar',          cmd: (url) => `plan ${url}` },
   { id: 'publish',  label: 'Publish articles',    desc: 'Write + publish articles to blog',         cmd: (url, n = 1) => `publish ${url} --count ${n}`,     countable: true },
-  { id: 'pubdir',   label: 'Publish directories', desc: 'Write + publish city directory articles',  cmd: (url, n = 1) => `publish-dir ${url} --count ${n}`, countable: true },
+  { id: 'pubdir',   label: 'Publish directories', desc: 'Write + publish niche directory articles',  cmd: (url, n = 1) => `publish-dir ${url} --count ${n}`, countable: true },
   { id: 'audit',    label: 'Audit site',          desc: 'Crawl and score all pages',                cmd: (url) => `audit ${url}` },
   { id: 'fix',      label: 'Apply fixes',         desc: 'Auto-fix issues from last audit',          cmd: (url) => `fix ${url} --yes` },
 ]

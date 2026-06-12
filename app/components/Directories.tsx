@@ -47,9 +47,9 @@ export default function Directories({ ctx }: { ctx: AppCtx }) {
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-8 py-5 flex items-center justify-between">
         <div>
-          <h1 className="text-sm font-semibold text-gray-900">City Directories — {site.name}</h1>
+          <h1 className="text-sm font-semibold text-gray-900">Directories — {site.name}</h1>
           <p className="text-xs text-gray-400 mt-0.5">
-            Publish "Best [Service] in [City]" directory articles to <span className="font-mono">content/directories</span>
+            Publish niche directory articles to <span className="font-mono">content/directories</span>
           </p>
         </div>
 
@@ -90,10 +90,9 @@ export default function Directories({ ctx }: { ctx: AppCtx }) {
       {lines.length === 0 && !running && (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
           <p className="text-4xl mb-4">⊟</p>
-          <p className="text-sm font-medium text-gray-700 mb-2">Local directory articles</p>
+          <p className="text-sm font-medium text-gray-700 mb-2">Directory articles</p>
           <p className="text-xs text-gray-400 max-w-sm">
-            Directories target city-specific searches like "best auto glass shops in Columbus, OH."
-            They publish to a separate path (<span className="font-mono">content/directories</span>) so they can have their own page layout on your site.
+            The AI determines the best directory format for your niche and publishes to a separate path (<span className="font-mono">content/directories</span>) so they can have their own layout on your site.
           </p>
           <p className="text-xs text-gray-400 mt-3 max-w-sm">
             Select how many to publish, then click Publish.
