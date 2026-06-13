@@ -55,17 +55,19 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
   const autoRunDone = useRef(false)
   useEffect(() => () => { readerRef.current?.cancel() }, [])
 
-  // Auto-run analyze if site hasn't been analyzed yet
+  // Auto-run analyze if site hasn't been analyzed yet and API key is present
   useEffect(() => {
     if (autoRunDone.current || !site.agentRoot) return
     fetch(`/api/setup-status?agentRoot=${encodeURIComponent(site.agentRoot)}`)
       .then(r => r.json())
-      .then(({ analyzed }: { analyzed: boolean }) => {
+      .then(({ analyzed, hasApiKey }: { analyzed: boolean; hasApiKey: boolean }) => {
         if (!analyzed && !autoRunDone.current) {
-          autoRunDone.current = true
-          localStorage.removeItem('seo_autoAnalyze')
-          const analyzeStage = STAGES.find(s => s.id === 'analyze')!
-          run(analyzeStage)
+          if (hasApiKey) {
+            autoRunDone.current = true
+            run(STAGES.find(s => s.id === 'analyze')!)
+          } else {
+            setLines([{ text: 'Add your Anthropic API key in Settings, then click Analyze site.\n', stream: 'system' }])
+          }
         }
       })
       .catch(() => {})
