@@ -45,8 +45,7 @@ export default function SiteSettings({ ctx }: { ctx: AppCtx }) {
           <button onClick={save} className="px-4 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-700 transition-colors">
             {saved ? '✓ Saved' : 'Save changes'}
           </button>
-          {ctx.sites.length > 1 && (
-            confirmDelete ? (
+          {confirmDelete ? (
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-500">Remove this site?</span>
                 <button onClick={() => ctx.deleteSite(site.id)} className="text-xs text-red-500 hover:underline">Yes, remove</button>
@@ -54,8 +53,7 @@ export default function SiteSettings({ ctx }: { ctx: AppCtx }) {
               </div>
             ) : (
               <button onClick={() => setConfirmDelete(true)} className="text-xs text-gray-400 hover:text-red-500 transition-colors">Remove site</button>
-            )
-          )}
+            )}
         </div>
       </div>
 
