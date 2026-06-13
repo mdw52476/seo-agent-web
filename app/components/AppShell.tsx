@@ -9,6 +9,7 @@ import Directories from './Directories'
 import Audit from './Audit'
 import Skills from './Skills'
 import SiteSettings from './SiteSettings'
+import Analytics from './Analytics'
 import AddSiteModal from './AddSiteModal'
 import Assistant from './Assistant'
 
@@ -32,6 +33,7 @@ export default function AppShell() {
             {ctx.page === 'articles'     && <Articles ctx={ctx} />}
             {ctx.page === 'directories'  && <Directories ctx={ctx} />}
             {ctx.page === 'audit'        && <Audit ctx={ctx} />}
+            {ctx.page === 'analytics'    && <Analytics ctx={ctx} />}
             {ctx.page === 'skills'       && <Skills ctx={ctx} />}
             {ctx.page === 'settings'  && <SiteSettings ctx={ctx} />}
           </>

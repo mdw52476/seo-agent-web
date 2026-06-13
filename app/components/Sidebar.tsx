@@ -8,6 +8,7 @@ const nav: { id: Page; label: string; icon: string }[] = [
   { id: 'articles',    label: 'Articles',    icon: '≡' },
   { id: 'directories', label: 'Directories', icon: '⊟' },
   { id: 'audit',       label: 'Audit',       icon: '◎' },
+  { id: 'analytics',   label: 'Analytics',   icon: '◈' },
   { id: 'skills',      label: 'Skills',      icon: '✦' },
   { id: 'settings',    label: 'Settings',    icon: '⚙' },
 ]
