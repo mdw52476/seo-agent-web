@@ -14,7 +14,6 @@ export async function GET(req: NextRequest) {
   const envPath = path.join(agentRoot, '.env')
   if (fs.existsSync(envPath)) {
     const envContents = fs.readFileSync(envPath, 'utf-8')
-    console.log('[setup-status] .env contents:', envContents.replace(/sk-ant-[^\n]+/, 'sk-ant-REDACTED'))
     hasApiKey = /ANTHROPIC_API_KEY=.+/.test(envContents)
   }
 
