@@ -33,6 +33,9 @@ function ensureAgent(agentRoot: string, send: (text: string, type?: string) => v
     })
   } else {
     send('Cloning agent from GitHub…\n', 'system')
+    // Preserve .env written by the sites route before wiping the directory
+    const envPath = path.join(agentRoot, '.env')
+    const savedEnv = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : ''
     if (fs.existsSync(agentRoot)) fs.rmSync(agentRoot, { recursive: true, force: true })
     fs.mkdirSync(path.dirname(agentRoot), { recursive: true })
     try {
@@ -41,6 +44,8 @@ function ensureAgent(agentRoot: string, send: (text: string, type?: string) => v
       send(`Clone failed: ${err.message}\n`, 'stderr')
       return false
     }
+    // Restore .env after clone (git doesn't track it)
+    if (savedEnv) fs.writeFileSync(envPath, savedEnv)
   }
 
   send('Installing dependencies (this takes ~30s on first run)…\n', 'system')
