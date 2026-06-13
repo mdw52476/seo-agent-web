@@ -52,17 +52,9 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
   const [lines, setLines] = useState<LogLine[]>([])
   const [counts, setCounts] = useState<Record<string, number>>({ publish: 1, pubdir: 1 })
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null)
+  const autoRunDone = useRef(false)
 
   useEffect(() => () => { readerRef.current?.cancel() }, [])
-
-  // Auto-run analyze when a new site is just added
-  useEffect(() => {
-    if (ctx.justAdded) {
-      ctx.clearJustAdded()
-      const analyzeStage = STAGES.find(s => s.id === 'analyze')!
-      run(analyzeStage)
-    }
-  }, [ctx.justAdded])
 
   const run = useCallback(async (stage: Stage) => {
     if (running) return
@@ -94,6 +86,15 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
     }
     setRunning(false)
   }, [running, site.agentRoot, site.url, counts])
+
+  // Auto-run analyze once when Pipeline mounts for a just-added site
+  useEffect(() => {
+    if (ctx.justAdded && !autoRunDone.current) {
+      autoRunDone.current = true
+      ctx.clearJustAdded()
+      run(STAGES.find(s => s.id === 'analyze')!)
+    }
+  }, [ctx.justAdded, run])
 
   const activeCmd = activeStage
     ? STAGES.find(s => s.id === activeStage)?.cmd(site.url, counts[activeStage] ?? 1)
