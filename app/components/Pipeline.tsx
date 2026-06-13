@@ -55,6 +55,15 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
 
   useEffect(() => () => { readerRef.current?.cancel() }, [])
 
+  // Auto-run analyze when a new site is just added
+  useEffect(() => {
+    if (ctx.justAdded) {
+      ctx.clearJustAdded()
+      const analyzeStage = STAGES.find(s => s.id === 'analyze')!
+      run(analyzeStage)
+    }
+  }, [ctx.justAdded])
+
   const run = useCallback(async (stage: Stage) => {
     if (running) return
     readerRef.current?.cancel()
