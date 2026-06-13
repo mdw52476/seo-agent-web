@@ -18,16 +18,19 @@ export async function POST(req: NextRequest) {
     site.agentRoot = path.join(os.homedir(), '.seo-agent', 'sites', site.id)
   }
 
-  // Create local agent directory and copy source if needed
+  // Create agent directory by cloning from GitHub if it doesn't exist
   const agentSrc = path.join(os.homedir(), 'seo-agent')
   if (!fs.existsSync(site.agentRoot)) {
     if (fs.existsSync(agentSrc)) {
+      // Local dev: copy from sibling folder
       fs.cpSync(agentSrc, site.agentRoot, {
         recursive: true,
         filter: (src) => !src.includes('node_modules') && !src.includes('.git'),
       })
     } else {
-      fs.mkdirSync(site.agentRoot, { recursive: true })
+      // Production: clone from GitHub
+      fs.mkdirSync(path.dirname(site.agentRoot), { recursive: true })
+      execSync(`git clone https://github.com/mdw52476/seo-agent.git "${site.agentRoot}"`, { stdio: 'ignore' })
     }
     try { execSync('npm install', { cwd: site.agentRoot, stdio: 'ignore' }) } catch {}
   }
