@@ -106,6 +106,16 @@ export default function Planner({ ctx }: { ctx: AppCtx }) {
     )
   }, [publishingDay, site.url, site.agentRoot, site.id, plan, fetchPlan])
 
+  const deletePlan = useCallback(async () => {
+    if (!plan || !confirm(`Delete Cycle ${plan.cycle}? This cannot be undone.`)) return
+    await fetch('/api/plan', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ siteId: site.id, cycle: plan.cycle }),
+    })
+    setPlan(null)
+  }, [plan, site.id])
+
   const skipDay = useCallback(async (day: DayEntry) => {
     await fetch('/api/plan', {
       method: 'PATCH',
@@ -139,13 +149,24 @@ export default function Planner({ ctx }: { ctx: AppCtx }) {
             {plan ? `Cycle ${plan.cycle} · ${done}/${total} days complete` : '30-day publishing schedule'}
           </p>
         </div>
-        <button
-          onClick={generatePlan}
-          disabled={generating}
-          className="px-4 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
-        >
-          {generating ? 'Generating…' : plan ? `Start Cycle ${plan.cycle + 1}` : 'Generate 30-Day Plan'}
-        </button>
+        <div className="flex items-center gap-2">
+          {plan && (
+            <button
+              onClick={deletePlan}
+              disabled={generating}
+              className="px-4 py-1.5 bg-white border border-red-200 text-red-500 text-xs font-medium rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
+            >
+              Delete Plan
+            </button>
+          )}
+          <button
+            onClick={generatePlan}
+            disabled={generating}
+            className="px-4 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          >
+            {generating ? 'Generating…' : plan ? `Start Cycle ${plan.cycle + 1}` : 'Generate 30-Day Plan'}
+          </button>
+        </div>
       </div>
 
       {/* Generation log */}

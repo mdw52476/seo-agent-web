@@ -16,6 +16,19 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(data ?? null)
 }
 
+export async function DELETE(req: NextRequest) {
+  const { siteId, cycle } = await req.json()
+  if (!siteId || !cycle) return NextResponse.json({ ok: false })
+
+  await supabase
+    .from('content_plans')
+    .delete()
+    .eq('site_id', siteId)
+    .eq('cycle', cycle)
+
+  return NextResponse.json({ ok: true })
+}
+
 export async function PATCH(req: NextRequest) {
   const { siteId, cycle, day, status } = await req.json()
   if (!siteId || !day || !status) return NextResponse.json({ ok: false })
