@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
-import { spawn } from 'child_process'
+import { spawn, execSync } from 'child_process'
 import path from 'path'
+import fs from 'fs'
 
 // Store active processes by a run ID
 const activeProcesses = new Map<string, ReturnType<typeof spawn>>()
@@ -16,12 +17,16 @@ export async function POST(req: NextRequest) {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text, type })}\n\n`))
       }
 
-      // Keep site folder's src/ in sync with the master seo-agent source
-      const masterSrc = path.join(require('os').homedir(), 'seo-agent', 'src')
-      const siteSrc   = path.join(agentRoot, 'src')
-      try {
-        require('fs').cpSync(masterSrc, siteSrc, { recursive: true, force: true })
-      } catch { /* non-fatal — run with whatever is there */ }
+      // Pull latest agent code before every run
+      const isGitRepo = fs.existsSync(path.join(agentRoot, '.git'))
+      if (isGitRepo) {
+        try { execSync('git pull --ff-only', { cwd: agentRoot, stdio: 'ignore' }) } catch { /* non-fatal */ }
+      } else {
+        // Local dev fallback: copy src/ from sibling seo-agent folder
+        const masterSrc = path.join(require('os').homedir(), 'seo-agent', 'src')
+        const siteSrc   = path.join(agentRoot, 'src')
+        try { fs.cpSync(masterSrc, siteSrc, { recursive: true, force: true }) } catch { /* non-fatal */ }
+      }
 
       const child = spawn('npx', ['tsx', 'src/index.ts', ...cmd.split(' ')], {
         cwd: agentRoot,
