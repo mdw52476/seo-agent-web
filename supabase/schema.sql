@@ -34,3 +34,15 @@ create table if not exists audit_reports (
 );
 
 create index if not exists audit_reports_site_id on audit_reports(site_id);
+
+-- 30-day content plans (one row per site per cycle)
+create table if not exists content_plans (
+  id         uuid primary key default gen_random_uuid(),
+  site_id    text not null references sites(id) on delete cascade,
+  cycle      int not null default 1,
+  days       jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  unique (site_id, cycle)
+);
+
+create index if not exists content_plans_site_id on content_plans(site_id);

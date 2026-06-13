@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { Site } from './types'
 
-export type Page = 'dashboard' | 'pipeline' | 'articles' | 'directories' | 'audit' | 'analytics' | 'skills' | 'settings'
+export type Page = 'dashboard' | 'pipeline' | 'planner' | 'articles' | 'directories' | 'audit' | 'analytics' | 'skills' | 'settings'
 
 export interface AppCtx {
   sites: Site[]
