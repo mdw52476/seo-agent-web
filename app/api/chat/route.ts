@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
       const send = (obj: object) =>
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
 
-      const systemPrompt = buildSystemPrompt({ ...site, env: siteEnv })
+      const systemPrompt = buildSystemPrompt({ ...site, env: mergedEnv })
       let conversationMessages: Anthropic.MessageParam[] = messages
 
       // Agentic loop — keep going until no more tool calls
