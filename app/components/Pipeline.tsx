@@ -18,7 +18,7 @@ interface Stage {
 const STAGES: Stage[] = [
   { id: 'analyze',  label: 'Analyze site',       desc: 'Crawl and profile the site',              cmd: (url) => `analyze ${url}` },
   { id: 'research', label: 'Research keywords',   desc: 'Generate and score keyword list',          cmd: (url) => `research ${url}` },
-  { id: 'plan',     label: 'Plan content',        desc: 'Build a 4-week content calendar',          cmd: (url) => `plan ${url}` },
+  { id: 'plan',     label: 'Plan content',        desc: 'Build a 30-day content schedule',          cmd: (url) => `day-guide ${url} --cycle 1` },
   { id: 'publish',  label: 'Publish articles',    desc: 'Write + publish articles to blog',         cmd: (url, n = 1) => `publish ${url} --count ${n}`,     countable: true },
   { id: 'pubdir',   label: 'Publish directories', desc: 'Write + publish niche directory articles',  cmd: (url, n = 1) => `publish-dir ${url} --count ${n}`, countable: true },
   { id: 'audit',    label: 'Audit site',          desc: 'Crawl and score all pages',                cmd: (url) => `audit ${url}` },
