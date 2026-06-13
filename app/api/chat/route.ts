@@ -136,7 +136,7 @@ const TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: 'object' as const,
       properties: {
-        command: { type: 'string', description: 'Pipeline command, e.g. "publish https://windshieldmap.com --count 1" or "audit https://windshieldmap.com"' },
+        command: { type: 'string', description: 'Pipeline command, e.g. "publish https://example.com --count 1" or "audit https://example.com"' },
       },
       required: ['command'],
     },
