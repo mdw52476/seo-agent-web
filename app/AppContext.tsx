@@ -13,8 +13,6 @@ export interface AppCtx {
   addSite: (site: Site) => Promise<void>
   updateSite: (site: Site) => void
   deleteSite: (id: string) => void
-  justAdded: boolean
-  clearJustAdded: () => void
 }
 
 const Ctx = createContext<AppCtx | null>(null)
@@ -25,7 +23,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [activeSiteId, setActiveSiteId] = useState<string>('')
   const [page, setPage] = useState<Page>('dashboard')
   const [loaded, setLoaded] = useState(false)
-  const [justAdded, setJustAdded] = useState(false)
 
   useEffect(() => {
     fetch('/api/sites').then(r => r.json()).then((stored: Site[]) => {
@@ -47,7 +44,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const finalSite = { ...site, agentRoot }
     setSites(prev => [...prev, finalSite])
     setActiveSiteId(finalSite.id)
-    setJustAdded(true)
+    localStorage.setItem('seo_autoAnalyze', '1')
     setPage('pipeline')
   }
 
@@ -63,8 +60,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     fetch('/api/sites', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
   }
 
-  const clearJustAdded = () => setJustAdded(false)
-  const ctx: AppCtx = { sites, activeSite, page, setPage, switchSite, addSite, updateSite, deleteSite, justAdded, clearJustAdded }
+  const ctx: AppCtx = { sites, activeSite, page, setPage, switchSite, addSite, updateSite, deleteSite }
 
   if (!loaded) return (
     <div className="flex h-screen items-center justify-center bg-gray-50">

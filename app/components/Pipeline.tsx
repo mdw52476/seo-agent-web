@@ -53,7 +53,6 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
   const [counts, setCounts] = useState<Record<string, number>>({ publish: 1, pubdir: 1 })
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null)
   const autoRunDone = useRef(false)
-
   useEffect(() => () => { readerRef.current?.cancel() }, [])
 
   const run = useCallback(async (stage: Stage) => {
@@ -89,12 +88,12 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
 
   // Auto-run analyze once when Pipeline mounts for a just-added site
   useEffect(() => {
-    if (ctx.justAdded && !autoRunDone.current) {
+    if (localStorage.getItem('seo_autoAnalyze') === '1' && !autoRunDone.current) {
       autoRunDone.current = true
-      ctx.clearJustAdded()
+      localStorage.removeItem('seo_autoAnalyze')
       run(STAGES.find(s => s.id === 'analyze')!)
     }
-  }, [ctx.justAdded, run])
+  }, [run])
 
   const activeCmd = activeStage
     ? STAGES.find(s => s.id === activeStage)?.cmd(site.url, counts[activeStage] ?? 1)
