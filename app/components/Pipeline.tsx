@@ -55,6 +55,22 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
   const autoRunDone = useRef(false)
   useEffect(() => () => { readerRef.current?.cancel() }, [])
 
+  // Auto-run analyze if site hasn't been analyzed yet
+  useEffect(() => {
+    if (autoRunDone.current || !site.agentRoot) return
+    fetch(`/api/setup-status?agentRoot=${encodeURIComponent(site.agentRoot)}`)
+      .then(r => r.json())
+      .then(({ analyzed }: { analyzed: boolean }) => {
+        if (!analyzed && !autoRunDone.current) {
+          autoRunDone.current = true
+          localStorage.removeItem('seo_autoAnalyze')
+          const analyzeStage = STAGES.find(s => s.id === 'analyze')!
+          run(analyzeStage)
+        }
+      })
+      .catch(() => {})
+  }, [site.id])
+
   const run = useCallback(async (stage: Stage) => {
     if (running) return
     readerRef.current?.cancel()

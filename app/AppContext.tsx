@@ -44,7 +44,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const finalSite = { ...site, agentRoot }
     setSites(prev => [...prev, finalSite])
     setActiveSiteId(finalSite.id)
-    localStorage.setItem('seo_autoAnalyze', '1')
     setPage('pipeline')
   }
 
