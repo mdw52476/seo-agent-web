@@ -172,8 +172,12 @@ Guidelines:
 export async function POST(req: NextRequest) {
   const { messages, site } = await req.json()
 
-  const siteEnv = getSiteEnv(site.agentRoot)
-  const anthropicKey = siteEnv.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? ''
+  // Prefer env vars from the request (survives Railway redeploys), fall back to filesystem
+  const requestEnv: Record<string, string> = site.env ?? {}
+  const fsEnv = getSiteEnv(site.agentRoot)
+  const mergedEnv = { ...fsEnv, ...requestEnv }
+
+  const anthropicKey = mergedEnv.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? ''
 
   if (!anthropicKey) {
     return new Response(
@@ -183,9 +187,9 @@ export async function POST(req: NextRequest) {
   }
 
   const client = new Anthropic({ apiKey: anthropicKey })
-  const token  = siteEnv.GITHUB_TOKEN ?? ''
-  const repo   = siteEnv.GITHUB_REPO ?? ''
-  const branch = siteEnv.GITHUB_BRANCH ?? 'main'
+  const token  = mergedEnv.GITHUB_TOKEN ?? ''
+  const repo   = mergedEnv.GITHUB_REPO ?? ''
+  const branch = mergedEnv.GITHUB_BRANCH ?? 'main'
 
   const encoder = new TextEncoder()
 
