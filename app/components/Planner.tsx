@@ -161,7 +161,7 @@ export default function Planner({ ctx }: { ctx: AppCtx }) {
           <div className="text-center py-20 text-gray-400 text-sm">Loading…</div>
         ) : !plan ? (
           <div className="text-center py-20 text-gray-400">
-            <p className="text-4xl mb-3">📅</p>
+            <p className="text-4xl mb-3">▦</p>
             <p className="text-sm font-medium text-gray-600 mb-1">No plan yet</p>
             <p className="text-xs">Click "Generate 30-Day Plan" to build your content schedule.</p>
           </div>
