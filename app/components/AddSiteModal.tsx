@@ -3,7 +3,7 @@ import { useState } from 'react'
 import type { Site, SiteType } from '../types'
 
 interface Props {
-  onAdd: (site: Site) => void
+  onAdd: (site: Site) => Promise<void>
   onClose: () => void
 }
 
@@ -69,7 +69,7 @@ export default function AddSiteModal({ onAdd, onClose }: Props) {
     }
   }
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     const id = crypto.randomUUID()
     const site: Site = {
       id,
@@ -83,7 +83,7 @@ export default function AddSiteModal({ onAdd, onClose }: Props) {
         GITHUB_DIRECTORY_PATH: env.GITHUB_DIRECTORY_PATH || (siteType === 'nextjs' ? 'content/directories' : 'directories'),
       },
     }
-    onAdd(site)
+    await onAdd(site)
     onClose()
   }
 
