@@ -78,9 +78,20 @@ export async function POST(req: NextRequest) {
         return
       }
 
+      // Parse site-specific .env and merge into child env so vars are present
+      // before any module initializes (ESM imports hoist before dotenv runs)
+      const siteEnv: Record<string, string> = {}
+      const siteEnvPath = path.join(agentRoot, '.env')
+      if (fs.existsSync(siteEnvPath)) {
+        for (const line of fs.readFileSync(siteEnvPath, 'utf-8').split('\n')) {
+          const m = line.match(/^([^#=][^=]*)=(.*)$/)
+          if (m) siteEnv[m[1].trim()] = m[2].trim()
+        }
+      }
+
       const child = spawn('npx', ['tsx', 'src/index.ts', ...cmd.split(' ')], {
         cwd: agentRoot,
-        env: { ...process.env, FORCE_COLOR: '0' },
+        env: { ...process.env, ...siteEnv, FORCE_COLOR: '0' },
         shell: true,
       })
 
