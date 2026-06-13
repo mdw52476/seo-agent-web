@@ -18,19 +18,22 @@ export async function POST(req: NextRequest) {
     site.agentRoot = path.join(os.homedir(), '.seo-agent', 'sites', site.id)
   }
 
-  // Create agent directory by cloning from GitHub if it doesn't exist
-  const agentSrc = path.join(os.homedir(), 'seo-agent')
-  if (!fs.existsSync(site.agentRoot)) {
+  // Create agent directory — clone from GitHub if src/index.ts is missing
+  const agentSrc    = path.join(os.homedir(), 'seo-agent')
+  const agentIndex  = path.join(site.agentRoot, 'src', 'index.ts')
+  if (!fs.existsSync(agentIndex)) {
     if (fs.existsSync(agentSrc)) {
       // Local dev: copy from sibling folder
+      fs.mkdirSync(site.agentRoot, { recursive: true })
       fs.cpSync(agentSrc, site.agentRoot, {
         recursive: true,
         filter: (src) => !src.includes('node_modules') && !src.includes('.git'),
       })
     } else {
-      // Production: clone from GitHub
+      // Production: clone from GitHub (repo must be public)
+      if (fs.existsSync(site.agentRoot)) fs.rmSync(site.agentRoot, { recursive: true, force: true })
       fs.mkdirSync(path.dirname(site.agentRoot), { recursive: true })
-      execSync(`git clone https://github.com/mdw52476/seo-agent.git "${site.agentRoot}"`, { stdio: 'ignore' })
+      execSync(`git clone https://github.com/mdw52476/seo-agent.git "${site.agentRoot}"`, { stdio: 'pipe' })
     }
     try { execSync('npm install', { cwd: site.agentRoot, stdio: 'ignore' }) } catch {}
   }
