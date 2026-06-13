@@ -56,7 +56,7 @@ export default function Audit({ ctx }: { ctx: AppCtx }) {
     const res = await fetch('/api/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cmd, agentRoot: site.agentRoot }),
+      body: JSON.stringify({ cmd, agentRoot: site.agentRoot, siteId: site.id, siteUrl: site.url, siteType: site.siteType, siteEnv: site.env }),
     })
 
     const reader = res.body!.getReader()

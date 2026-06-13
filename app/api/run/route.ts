@@ -61,7 +61,7 @@ function ensureAgent(agentRoot: string, send: (text: string, type?: string) => v
 }
 
 export async function POST(req: NextRequest) {
-  const { cmd, agentRoot, runId } = await req.json()
+  const { cmd, agentRoot, runId, siteId, siteUrl, siteType, siteEnv: requestEnv } = await req.json()
 
   const encoder = new TextEncoder()
 
@@ -78,20 +78,34 @@ export async function POST(req: NextRequest) {
         return
       }
 
-      // Parse site-specific .env and merge into child env so vars are present
-      // before any module initializes (ESM imports hoist before dotenv runs)
-      const siteEnv: Record<string, string> = {}
-      const siteEnvPath = path.join(agentRoot, '.env')
-      if (fs.existsSync(siteEnvPath)) {
-        for (const line of fs.readFileSync(siteEnvPath, 'utf-8').split('\n')) {
-          const m = line.match(/^([^#=][^=]*)=(.*)$/)
-          if (m) siteEnv[m[1].trim()] = m[2].trim()
-        }
+      // Always rewrite .env from request data so it survives Railway redeploys
+      // (ephemeral filesystem wipes ~/.seo-agent on every deploy)
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? ''
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? ''
+      const userEnvLines = Object.entries(requestEnv ?? {})
+        .filter(([, v]) => v)
+        .map(([k, v]) => `${k}=${v}`)
+        .join('\n')
+      const envContent = [
+        userEnvLines,
+        siteUrl  ? `SITE_URL=${siteUrl}`   : '',
+        siteType ? `SITE_TYPE=${siteType}` : '',
+        siteId   ? `SITE_ID=${siteId}`     : '',
+        supabaseUrl ? `SUPABASE_URL=${supabaseUrl}` : '',
+        supabaseKey ? `SUPABASE_ANON_KEY=${supabaseKey}` : '',
+      ].filter(Boolean).join('\n') + '\n'
+      fs.writeFileSync(path.join(agentRoot, '.env'), envContent)
+
+      // Build child env — merge parsed .env so vars exist before ESM module init
+      const siteEnvVars: Record<string, string> = {}
+      for (const line of envContent.split('\n')) {
+        const m = line.match(/^([^#=][^=]*)=(.*)$/)
+        if (m) siteEnvVars[m[1].trim()] = m[2].trim()
       }
 
       const child = spawn('npx', ['tsx', 'src/index.ts', ...cmd.split(' ')], {
         cwd: agentRoot,
-        env: { ...process.env, ...siteEnv, FORCE_COLOR: '0' },
+        env: { ...process.env, ...siteEnvVars, FORCE_COLOR: '0' },
         shell: true,
       })
 
