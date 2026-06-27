@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 
-const SKILL_FILES = ['voice-guide.md', 'SKILL.md'] as const
+const SKILL_FILES = ['voice-guide.md', 'SKILL.md', 'site-layout.md'] as const
 
 export async function GET(req: NextRequest) {
   const agentRoot = req.nextUrl.searchParams.get('agentRoot')
