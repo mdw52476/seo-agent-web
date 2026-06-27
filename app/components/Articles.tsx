@@ -13,6 +13,7 @@ export default function Articles({ ctx }: { ctx: AppCtx }) {
   const [articles, setArticles] = useState<PublishedEntry[]>([])
   const [running, setRunning] = useState(false)
   const [count, setCount] = useState(1)
+  const [brief, setBrief] = useState('')
   const [lines, setLines] = useState<LogLine[]>([])
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null)
 
@@ -27,10 +28,15 @@ export default function Articles({ ctx }: { ctx: AppCtx }) {
     setRunning(true)
     setLines([])
 
+    const briefArg = brief.trim() ? ` --brief ${JSON.stringify(brief.trim())}` : ''
+    const cmd = brief.trim()
+      ? `publish ${site.url}${briefArg}`
+      : `publish ${site.url} --count ${count}`
+
     const res = await fetch('/api/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cmd: `publish ${site.url} --count ${count}`, agentRoot: site.agentRoot, siteId: site.id, siteUrl: site.url, siteType: site.siteType, siteEnv: site.env }),
+      body: JSON.stringify({ cmd, agentRoot: site.agentRoot, siteId: site.id, siteUrl: site.url, siteType: site.siteType, siteEnv: site.env }),
     })
 
     const reader = res.body!.getReader()
@@ -77,13 +83,34 @@ export default function Articles({ ctx }: { ctx: AppCtx }) {
             disabled={running}
             className="px-4 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
           >
-            {running ? 'Publishing…' : 'Publish'}
+            {running ? 'Publishing…' : brief.trim() ? 'Publish Brief' : 'Publish'}
           </button>
           {running && (
             <button onClick={() => { readerRef.current?.cancel(); setRunning(false) }}
               className="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
               Stop
             </button>
+          )}
+        </div>
+      </div>
+
+      {/* Article brief input */}
+      <div className="border-b border-gray-100 px-8 py-4 bg-gray-50 shrink-0">
+        <div className="max-w-3xl">
+          <label className="block text-xs font-medium text-gray-700 mb-1.5">
+            Article Brief <span className="text-gray-400 font-normal">(optional — leave blank to let the agent choose the topic)</span>
+          </label>
+          <textarea
+            value={brief}
+            onChange={e => setBrief(e.target.value)}
+            placeholder="Describe the article you want written. Include topic, angle, key points to cover, tone, or any other instructions.&#10;&#10;Example: Write a guide on winter windshield care for Ohio drivers. Cover frost prevention, de-icing tips, when to replace vs repair, and insurance claims. Casual tone."
+            rows={3}
+            className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 bg-white focus:outline-none focus:border-gray-400 resize-none placeholder:text-gray-300 text-gray-800 leading-relaxed"
+          />
+          {brief.trim() && (
+            <p className="text-xs text-blue-500 mt-1.5">
+              Agent will write directly to this brief — keyword research and content planning will be skipped.
+            </p>
           )}
         </div>
       </div>
