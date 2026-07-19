@@ -13,14 +13,21 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const supabase = createClient()
 
-    const { error } = mode === 'signin'
-      ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({ email, password })
+    try {
+      const supabase = createClient()
 
-    setLoading(false)
-    if (error) { setError(error.message); return }
+      const { error } = mode === 'signin'
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signUp({ email, password })
+
+      if (error) { setError(error.message); return }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+      return
+    } finally {
+      setLoading(false)
+    }
 
     if (mode === 'signup') {
       setError('Check your email to confirm your account, then sign in.')
