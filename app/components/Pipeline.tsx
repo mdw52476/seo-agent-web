@@ -13,11 +13,12 @@ interface Stage {
   desc: string
   cmd: (url: string, count?: number) => string
   countable?: boolean
+  manualRerun?: boolean
 }
 
 const STAGES: Stage[] = [
-  { id: 'analyze',  label: 'Analyze site',       desc: 'Crawl and profile the site',              cmd: (url) => `analyze ${url}` },
-  { id: 'research', label: 'Research keywords',   desc: 'Generate and score keyword list',          cmd: (url) => `research ${url}` },
+  { id: 'analyze',  label: 'Analyze site',       desc: 'Crawl and profile the site',              cmd: (url) => `analyze ${url}`,  manualRerun: true },
+  { id: 'research', label: 'Research keywords',   desc: 'Generate and score keyword list',          cmd: (url) => `research ${url}`, manualRerun: true },
   { id: 'plan',     label: 'Plan content',        desc: 'Build a 30-day content schedule',          cmd: (url) => `day-guide ${url} --cycle 1` },
   { id: 'publish',  label: 'Publish articles',    desc: 'Write + publish articles to blog',         cmd: (url, n = 1) => `publish ${url} --count ${n}`,     countable: true },
   { id: 'pubdir',   label: 'Publish directories', desc: 'Write + publish niche directory articles',  cmd: (url, n = 1) => `publish-dir ${url} --count ${n}`, countable: true },
@@ -51,23 +52,23 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
   const [activeStage, setActiveStage] = useState<StageId | null>(null)
   const [lines, setLines] = useState<LogLine[]>([])
   const [counts, setCounts] = useState<Record<string, number>>({ publish: 1, pubdir: 1 })
-  const [analyzeLog, setAnalyzeLog] = useState<LogLine[]>([])
-  const [analyzeRanAt, setAnalyzeRanAt] = useState<string | null>(null)
+  const [lastLogs, setLastLogs] = useState<Partial<Record<StageId, { lines: LogLine[]; ranAt: string | null }>>>({})
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null)
   const autoRunDone = useRef(false)
   useEffect(() => () => { readerRef.current?.cancel() }, [])
 
-  const fetchAnalyzeLog = useCallback(() => {
-    fetch(`/api/run-log?siteId=${encodeURIComponent(site.id)}&stage=analyze`)
+  const fetchLastLog = useCallback((stageId: StageId) => {
+    fetch(`/api/run-log?siteId=${encodeURIComponent(site.id)}&stage=${stageId}`)
       .then(r => r.json())
       .then((data: { lines: LogLine[]; ranAt: string } | null) => {
-        setAnalyzeLog(data?.lines ?? [])
-        setAnalyzeRanAt(data?.ranAt ?? null)
+        setLastLogs(prev => ({ ...prev, [stageId]: { lines: data?.lines ?? [], ranAt: data?.ranAt ?? null } }))
       })
       .catch(() => {})
   }, [site.id])
 
-  useEffect(() => { fetchAnalyzeLog() }, [fetchAnalyzeLog])
+  useEffect(() => {
+    STAGES.filter(s => s.manualRerun).forEach(s => fetchLastLog(s.id))
+  }, [fetchLastLog])
 
   // Auto-run analyze if site hasn't been analyzed yet and API key is present
   useEffect(() => {
@@ -116,13 +117,13 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
       }
     }
     setRunning(false)
-    if (stage.id === 'analyze') fetchAnalyzeLog()
-  }, [running, site.agentRoot, site.url, counts, fetchAnalyzeLog])
+    if (stage.manualRerun) fetchLastLog(stage.id)
+  }, [running, site.agentRoot, site.url, counts, fetchLastLog])
 
-  const viewAnalyzeLog = useCallback(() => {
-    setActiveStage('analyze')
-    setLines(analyzeLog)
-  }, [analyzeLog])
+  const viewLastLog = useCallback((stage: Stage) => {
+    setActiveStage(stage.id)
+    setLines(lastLogs[stage.id]?.lines ?? [])
+  }, [lastLogs])
 
   // Auto-run analyze once when Pipeline mounts for a just-added site
   useEffect(() => {
@@ -133,9 +134,8 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
     }
   }, [run])
 
-  const activeCmd = activeStage
-    ? STAGES.find(s => s.id === activeStage)?.cmd(site.url, counts[activeStage] ?? 1)
-    : null
+  const activeStageObj = activeStage ? STAGES.find(s => s.id === activeStage) : null
+  const activeCmd = activeStageObj ? activeStageObj.cmd(site.url, counts[activeStageObj.id] ?? 1) : null
 
   return (
     <div className="flex h-full">
@@ -149,7 +149,7 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
           {STAGES.map(stage => (
             <div
               key={stage.id}
-              onClick={() => { if (!running) { stage.id === 'analyze' ? viewAnalyzeLog() : run(stage) } }}
+              onClick={() => { if (!running) { stage.manualRerun ? viewLastLog(stage) : run(stage) } }}
               className={`px-5 py-3 transition-colors border-l-2 select-none ${
                 activeStage === stage.id ? 'bg-gray-50 border-gray-900' : 'border-transparent hover:bg-gray-50'
               } ${running && activeStage !== stage.id ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
@@ -180,11 +180,11 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white">
           <div>
             <p className="text-sm font-medium text-gray-700">
-              {activeStage ? STAGES.find(s => s.id === activeStage)?.label : 'Select a stage to run'}
+              {activeStageObj ? activeStageObj.label : 'Select a stage to run'}
             </p>
-            {activeStage === 'analyze' && !running ? (
+            {activeStageObj?.manualRerun && !running ? (
               <p className="text-xs text-gray-400 mt-0.5">
-                {analyzeRanAt ? `Last run: ${new Date(analyzeRanAt).toLocaleString()}` : 'Not yet run'}
+                {lastLogs[activeStageObj.id]?.ranAt ? `Last run: ${new Date(lastLogs[activeStageObj.id]!.ranAt!).toLocaleString()}` : 'Not yet run'}
               </p>
             ) : activeCmd && (
               <p className="text-xs text-gray-400 font-mono mt-0.5">
@@ -197,10 +197,10 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
               className="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
               Stop
             </button>
-          ) : activeStage === 'analyze' && (
-            <button onClick={() => run(STAGES.find(s => s.id === 'analyze')!)}
+          ) : activeStageObj?.manualRerun && (
+            <button onClick={() => run(activeStageObj)}
               className="px-3 py-1.5 text-xs bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
-              Re-run analyze
+              Re-run {activeStageObj.label.toLowerCase()}
             </button>
           )}
         </div>
