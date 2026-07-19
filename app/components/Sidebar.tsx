@@ -73,7 +73,10 @@ export default function Sidebar({ ctx, onAddSite }: { ctx: AppCtx; onAddSite: ()
       </nav>
 
       <div className="px-5 py-4 border-t border-gray-100">
-        <p className="text-xs text-gray-400">SEO Agent v1.0</p>
+        <p className="text-xs text-gray-400 truncate mb-1">{ctx.user?.email ?? ''}</p>
+        <button onClick={ctx.signOut} className="text-xs text-gray-400 hover:text-gray-700 transition-colors">
+          Sign out
+        </button>
       </div>
     </aside>
   )

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '../../lib/supabase'
+import { createClient } from '../../lib/supabase/server'
 
 export async function GET(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json(null, { status: 401 })
+
   const siteId = req.nextUrl.searchParams.get('siteId') ?? ''
   if (!siteId) return NextResponse.json(null)
 
@@ -17,6 +21,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ ok: false }, { status: 401 })
+
   const { siteId, cycle } = await req.json()
   if (!siteId || !cycle) return NextResponse.json({ ok: false })
 
@@ -30,6 +38,10 @@ export async function DELETE(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ ok: false }, { status: 401 })
+
   const { siteId, cycle, day, status } = await req.json()
   if (!siteId || !day || !status) return NextResponse.json({ ok: false })
 

@@ -57,7 +57,7 @@ export default function Assistant({ ctx }: { ctx: AppCtx }) {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, site }),
+        body: JSON.stringify({ messages: apiMessages, siteId: site.id }),
       })
 
       const reader = res.body!.getReader()

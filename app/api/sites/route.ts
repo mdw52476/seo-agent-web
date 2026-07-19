@@ -2,15 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { supabase } from '../../lib/supabase'
+import { createClient } from '../../lib/supabase/server'
 
 export async function GET() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json([], { status: 401 })
+
   const { data, error } = await supabase.from('sites').select('*').order('created_at')
   if (error) return NextResponse.json([], { status: 500 })
   return NextResponse.json(data.map(dbToSite))
 }
 
 export async function POST(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ ok: false }, { status: 401 })
+
   const site = await req.json()
 
   if (!site.agentRoot) {
@@ -38,13 +46,17 @@ export async function POST(req: NextRequest) {
   )
 
   // Upsert into Supabase
-  const { error } = await supabase.from('sites').upsert(siteToDb(site))
+  const { error } = await supabase.from('sites').upsert({ ...siteToDb(site), user_id: user.id })
   if (error) console.error('Supabase upsert error:', error)
 
   return NextResponse.json({ ok: true, agentRoot: site.agentRoot })
 }
 
 export async function DELETE(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ ok: false }, { status: 401 })
+
   const { id } = await req.json()
   await supabase.from('sites').delete().eq('id', id)
   return NextResponse.json({ ok: true })

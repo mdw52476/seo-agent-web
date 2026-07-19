@@ -5,6 +5,7 @@ import path from 'path'
 import os from 'os'
 import { parse as parseEnv } from 'dotenv'
 import { spawn } from 'child_process'
+import { createClient } from '../../lib/supabase/server'
 
 const MASTER_AGENT = path.join(os.homedir(), 'seo-agent')
 
@@ -170,12 +171,19 @@ Guidelines:
 // ── Route ─────────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const { messages, site } = await req.json()
+  const { messages, siteId } = await req.json()
 
-  // Prefer env vars from the request (survives Railway redeploys), fall back to filesystem
-  const requestEnv: Record<string, string> = site.env ?? {}
-  const fsEnv = getSiteEnv(site.agentRoot)
-  const mergedEnv = { ...fsEnv, ...requestEnv }
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return new Response('Unauthorized', { status: 401 })
+
+  const { data: site, error: siteError } = await supabase.from('sites').select('*').eq('id', siteId).single()
+  if (siteError || !site) return new Response('Site not found', { status: 404 })
+
+  // Prefer DB env (survives Railway redeploys), fall back to filesystem
+  const dbEnv: Record<string, string> = site.env ?? {}
+  const fsEnv = getSiteEnv(site.agent_root)
+  const mergedEnv = { ...fsEnv, ...dbEnv }
 
   const anthropicKey = mergedEnv.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? ''
 
@@ -198,7 +206,7 @@ export async function POST(req: NextRequest) {
       const send = (obj: object) =>
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
 
-      const systemPrompt = buildSystemPrompt({ ...site, env: mergedEnv })
+      const systemPrompt = buildSystemPrompt({ name: site.name, url: site.url, siteType: site.site_type, env: mergedEnv })
       let conversationMessages: Anthropic.MessageParam[] = messages
 
       // Agentic loop — keep going until no more tool calls
@@ -238,7 +246,7 @@ export async function POST(req: NextRequest) {
                 result = await ghWriteFile(token, repo, branch, input.path, input.content, input.commit_message)
               } else if (toolUse.name === 'run_pipeline') {
                 send({ type: 'tool_call', name: 'run_pipeline', input: { command: input.command, status: 'running…' } })
-                result = await runPipeline(site.agentRoot, input.command)
+                result = await runPipeline(site.agent_root, input.command)
               }
             } catch (err) {
               result = `Error: ${err instanceof Error ? err.message : String(err)}`

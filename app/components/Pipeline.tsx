@@ -51,9 +51,23 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
   const [activeStage, setActiveStage] = useState<StageId | null>(null)
   const [lines, setLines] = useState<LogLine[]>([])
   const [counts, setCounts] = useState<Record<string, number>>({ publish: 1, pubdir: 1 })
+  const [analyzeLog, setAnalyzeLog] = useState<LogLine[]>([])
+  const [analyzeRanAt, setAnalyzeRanAt] = useState<string | null>(null)
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null)
   const autoRunDone = useRef(false)
   useEffect(() => () => { readerRef.current?.cancel() }, [])
+
+  const fetchAnalyzeLog = useCallback(() => {
+    fetch(`/api/run-log?siteId=${encodeURIComponent(site.id)}&stage=analyze`)
+      .then(r => r.json())
+      .then((data: { lines: LogLine[]; ranAt: string } | null) => {
+        setAnalyzeLog(data?.lines ?? [])
+        setAnalyzeRanAt(data?.ranAt ?? null)
+      })
+      .catch(() => {})
+  }, [site.id])
+
+  useEffect(() => { fetchAnalyzeLog() }, [fetchAnalyzeLog])
 
   // Auto-run analyze if site hasn't been analyzed yet and API key is present
   useEffect(() => {
@@ -102,7 +116,13 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
       }
     }
     setRunning(false)
-  }, [running, site.agentRoot, site.url, counts])
+    if (stage.id === 'analyze') fetchAnalyzeLog()
+  }, [running, site.agentRoot, site.url, counts, fetchAnalyzeLog])
+
+  const viewAnalyzeLog = useCallback(() => {
+    setActiveStage('analyze')
+    setLines(analyzeLog)
+  }, [analyzeLog])
 
   // Auto-run analyze once when Pipeline mounts for a just-added site
   useEffect(() => {
@@ -129,7 +149,7 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
           {STAGES.map(stage => (
             <div
               key={stage.id}
-              onClick={() => !running && run(stage)}
+              onClick={() => { if (!running) { stage.id === 'analyze' ? viewAnalyzeLog() : run(stage) } }}
               className={`px-5 py-3 transition-colors border-l-2 select-none ${
                 activeStage === stage.id ? 'bg-gray-50 border-gray-900' : 'border-transparent hover:bg-gray-50'
               } ${running && activeStage !== stage.id ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
@@ -162,16 +182,25 @@ export default function Pipeline({ ctx }: { ctx: AppCtx }) {
             <p className="text-sm font-medium text-gray-700">
               {activeStage ? STAGES.find(s => s.id === activeStage)?.label : 'Select a stage to run'}
             </p>
-            {activeCmd && (
+            {activeStage === 'analyze' && !running ? (
+              <p className="text-xs text-gray-400 mt-0.5">
+                {analyzeRanAt ? `Last run: ${new Date(analyzeRanAt).toLocaleString()}` : 'Not yet run'}
+              </p>
+            ) : activeCmd && (
               <p className="text-xs text-gray-400 font-mono mt-0.5">
                 npx tsx src/index.ts {activeCmd}
               </p>
             )}
           </div>
-          {running && (
+          {running ? (
             <button onClick={() => { readerRef.current?.cancel(); setRunning(false) }}
               className="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
               Stop
+            </button>
+          ) : activeStage === 'analyze' && (
+            <button onClick={() => run(STAGES.find(s => s.id === 'analyze')!)}
+              className="px-3 py-1.5 text-xs bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+              Re-run analyze
             </button>
           )}
         </div>

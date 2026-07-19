@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '../../lib/supabase'
+import { createClient } from '../../lib/supabase/server'
 
 const RANGES: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90, '1yr': 365 }
 
 export async function GET(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json(null, { status: 401 })
+
   const siteId = req.nextUrl.searchParams.get('siteId') ?? ''
   const range  = req.nextUrl.searchParams.get('range') ?? '30d'
   if (!siteId) return NextResponse.json(null)

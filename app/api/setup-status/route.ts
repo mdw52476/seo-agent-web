@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
+import { createClient } from '../../lib/supabase/server'
 
 export async function GET(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ ready: false, analyzed: false, hasApiKey: false }, { status: 401 })
+
   const agentRoot = req.nextUrl.searchParams.get('agentRoot') ?? ''
   if (!agentRoot) return NextResponse.json({ ready: false, analyzed: false, hasApiKey: false })
 

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '../../lib/supabase'
+import { createClient } from '../../lib/supabase/server'
 
 export async function GET(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json([], { status: 401 })
+
   const siteId = req.nextUrl.searchParams.get('siteId') ?? ''
   if (!siteId) return NextResponse.json([])
 

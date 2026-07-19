@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '../../lib/supabase/server'
 
 // Common blog/content folder names to look for, in priority order
 const BLOG_CANDIDATES = ['content/posts', 'content/blog', 'posts', 'blog', 'articles', '_posts', 'src/content/posts', 'src/posts', 'src/blog']
@@ -53,6 +54,10 @@ function detectSiteType(paths: string[]): 'nextjs' | 'html' {
 }
 
 export async function POST(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { token, repo, branch = 'main' } = await req.json()
   if (!token || !repo) return NextResponse.json({ error: 'token and repo required' }, { status: 400 })
 

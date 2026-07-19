@@ -3,6 +3,7 @@ import { spawn, execSync } from 'child_process'
 import path from 'path'
 import fs from 'fs'
 import os from 'os'
+import { createClient } from '../../lib/supabase/server'
 
 const activeProcesses = new Map<string, ReturnType<typeof spawn>>()
 
@@ -61,20 +62,47 @@ function ensureAgent(agentRoot: string, send: (text: string, type?: string) => v
 }
 
 export async function POST(req: NextRequest) {
-  const { cmd, agentRoot, runId, siteId, siteUrl, siteType, siteEnv: requestEnv } = await req.json()
+  const { cmd, runId, siteId } = await req.json()
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return new Response('Unauthorized', { status: 401 })
+
+  // Look up the site server-side rather than trusting agentRoot/env from the
+  // client body — RLS makes a non-owned siteId come back as "not found".
+  const { data: site, error: siteError } = await supabase.from('sites').select('*').eq('id', siteId).single()
+  if (siteError || !site) return new Response('Site not found', { status: 404 })
+
+  const agentRoot = site.agent_root
+  const siteUrl = site.url
+  const siteType = site.site_type
+  const requestEnv: Record<string, string> = site.env ?? {}
 
   const encoder = new TextEncoder()
+
+  const stage = String(cmd ?? '').trim().split(' ')[0]
+  const logLines: { text: string; stream: string }[] = []
+  const saveLog = async () => {
+    if (!siteId || !stage) return
+    try {
+      await supabase.from('run_logs').upsert(
+        { site_id: siteId, stage, lines: logLines, ran_at: new Date().toISOString() },
+        { onConflict: 'site_id,stage' }
+      )
+    } catch {}
+  }
 
   const stream = new ReadableStream({
     start(controller) {
       const send = (text: string, type = 'stdout') => {
+        logLines.push({ text, stream: type })
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text, type })}\n\n`))
       }
 
       const ready = ensureAgent(agentRoot, send)
       if (!ready) {
         send('\n[Setup failed — check your agent configuration]\n', 'system')
-        controller.close()
+        saveLog().finally(() => controller.close())
         return
       }
 
@@ -116,11 +144,11 @@ export async function POST(req: NextRequest) {
       child.on('close', (code) => {
         send(`\n[Process exited with code ${code}]\n`, 'system')
         if (runId) activeProcesses.delete(runId)
-        controller.close()
+        saveLog().finally(() => controller.close())
       })
       child.on('error', (err) => {
         send(`Error: ${err.message}\n`, 'stderr')
-        controller.close()
+        saveLog().finally(() => controller.close())
       })
     }
   })

@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
+import { createClient } from '../../lib/supabase/server'
 
 const SKILL_FILES = ['voice-guide.md', 'SKILL.md', 'site-layout.md'] as const
 
 export async function GET(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const agentRoot = req.nextUrl.searchParams.get('agentRoot')
   if (!agentRoot) return NextResponse.json({ error: 'agentRoot required' }, { status: 400 })
 
@@ -17,6 +22,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { agentRoot, filename, content } = await req.json()
   if (!agentRoot || !filename) return NextResponse.json({ error: 'agentRoot and filename required' }, { status: 400 })
   if (!SKILL_FILES.includes(filename)) return NextResponse.json({ error: 'Invalid filename' }, { status: 400 })

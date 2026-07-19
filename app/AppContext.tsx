@@ -1,6 +1,7 @@
 'use client'
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { Site } from './types'
+import { createClient } from './lib/supabase/client'
 
 export type Page = 'dashboard' | 'pipeline' | 'planner' | 'articles' | 'directories' | 'audit' | 'analytics' | 'skills' | 'settings'
 
@@ -13,6 +14,8 @@ export interface AppCtx {
   addSite: (site: Site) => Promise<void>
   updateSite: (site: Site) => void
   deleteSite: (id: string) => void
+  user: { id: string; email: string } | null
+  signOut: () => Promise<void>
 }
 
 const Ctx = createContext<AppCtx | null>(null)
@@ -23,6 +26,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [activeSiteId, setActiveSiteId] = useState<string>('')
   const [page, setPage] = useState<Page>('dashboard')
   const [loaded, setLoaded] = useState(false)
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUser({ id: data.user.id, email: data.user.email ?? '' })
+    })
+  }, [])
 
   useEffect(() => {
     fetch('/api/sites').then(r => r.json()).then((stored: Site[]) => {
@@ -33,6 +44,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setLoaded(true)
     })
   }, [])
+
+  const signOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+  }
 
   const activeSite = sites.find(s => s.id === activeSiteId) ?? null
 
@@ -59,7 +76,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     fetch('/api/sites', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
   }
 
-  const ctx: AppCtx = { sites, activeSite, page, setPage, switchSite, addSite, updateSite, deleteSite }
+  const ctx: AppCtx = { sites, activeSite, page, setPage, switchSite, addSite, updateSite, deleteSite, user, signOut }
 
   if (!loaded) return (
     <div className="flex h-screen items-center justify-center bg-gray-50">

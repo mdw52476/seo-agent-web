@@ -7,23 +7,17 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json(null, { status: 401 })
 
   const siteId = req.nextUrl.searchParams.get('siteId') ?? ''
-  if (!siteId) return NextResponse.json(null)
+  const stage = req.nextUrl.searchParams.get('stage') ?? ''
+  if (!siteId || !stage) return NextResponse.json(null)
 
   const { data, error } = await supabase
-    .from('audit_reports')
-    .select('*')
+    .from('run_logs')
+    .select('lines, ran_at')
     .eq('site_id', siteId)
-    .order('audited_at', { ascending: false })
-    .limit(1)
+    .eq('stage', stage)
     .single()
 
   if (error || !data) return NextResponse.json(null)
 
-  return NextResponse.json({
-    siteUrl:       data.site_id,
-    auditedAt:     data.audited_at,
-    pagesChecked:  data.pages_checked,
-    issues:        data.issues,
-    score:         data.score,
-  })
+  return NextResponse.json({ lines: data.lines, ranAt: data.ran_at })
 }
