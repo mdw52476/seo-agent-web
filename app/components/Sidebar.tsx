@@ -4,12 +4,13 @@ import type { AppCtx, Page } from '../AppContext'
 
 const nav: { id: Page; label: string; icon: string }[] = [
   { id: 'dashboard',   label: 'Dashboard',   icon: '⬡' },
-  { id: 'pipeline',    label: 'Pipeline',    icon: '▶' },
+  { id: 'pipeline',    label: 'Site Metrics', icon: '▶' },
   { id: 'planner',     label: 'Planner',     icon: '▦' },
   { id: 'articles',    label: 'Articles',    icon: '≡' },
   { id: 'directories', label: 'Directories', icon: '⊟' },
   { id: 'audit',       label: 'Audit',       icon: '◎' },
   { id: 'analytics',   label: 'Analytics',   icon: '◈' },
+  { id: 'sitemap',     label: 'Sitemap',     icon: '⛓' },
   { id: 'skills',      label: 'Skills',      icon: '✦' },
   { id: 'settings',    label: 'Settings',    icon: '⚙' },
 ]

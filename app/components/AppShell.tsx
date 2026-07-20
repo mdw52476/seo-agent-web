@@ -10,6 +10,7 @@ import Audit from './Audit'
 import Skills from './Skills'
 import SiteSettings from './SiteSettings'
 import Analytics from './Analytics'
+import Sitemap from './Sitemap'
 import Planner from './Planner'
 import AddSiteModal from './AddSiteModal'
 import Assistant from './Assistant'
@@ -36,6 +37,7 @@ export default function AppShell() {
             {ctx.page === 'directories'  && <Directories ctx={ctx} />}
             {ctx.page === 'audit'        && <Audit ctx={ctx} />}
             {ctx.page === 'analytics'    && <Analytics ctx={ctx} />}
+            {ctx.page === 'sitemap'      && <Sitemap ctx={ctx} />}
             {ctx.page === 'skills'       && <Skills ctx={ctx} />}
             {ctx.page === 'settings'  && <SiteSettings ctx={ctx} />}
           </>

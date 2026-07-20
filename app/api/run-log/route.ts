@@ -8,7 +8,19 @@ export async function GET(req: NextRequest) {
 
   const siteId = req.nextUrl.searchParams.get('siteId') ?? ''
   const stage = req.nextUrl.searchParams.get('stage') ?? ''
-  if (!siteId || !stage) return NextResponse.json(null)
+  if (!siteId) return NextResponse.json(null)
+
+  // No stage given — return a lightweight summary of every stage's last run for this site
+  if (!stage) {
+    const { data, error } = await supabase
+      .from('run_logs')
+      .select('stage, ran_at')
+      .eq('site_id', siteId)
+      .order('ran_at', { ascending: false })
+
+    if (error) return NextResponse.json([])
+    return NextResponse.json(data.map(r => ({ stage: r.stage, ranAt: r.ran_at })))
+  }
 
   const { data, error } = await supabase
     .from('run_logs')

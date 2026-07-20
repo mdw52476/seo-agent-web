@@ -7,13 +7,14 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json([], { status: 401 })
 
   const siteId = req.nextUrl.searchParams.get('siteId') ?? ''
+  const type = req.nextUrl.searchParams.get('type') ?? 'article'
   if (!siteId) return NextResponse.json([])
 
   const { data, error } = await supabase
     .from('articles')
     .select('*')
     .eq('site_id', siteId)
-    .eq('article_type', 'article')
+    .eq('article_type', type)
     .order('published_at')
 
   if (error) return NextResponse.json([])

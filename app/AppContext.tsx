@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import type { Site } from './types'
 import { createClient } from './lib/supabase/client'
 
-export type Page = 'dashboard' | 'pipeline' | 'planner' | 'articles' | 'directories' | 'audit' | 'analytics' | 'skills' | 'settings'
+export type Page = 'dashboard' | 'pipeline' | 'planner' | 'articles' | 'directories' | 'audit' | 'analytics' | 'sitemap' | 'skills' | 'settings'
 
 export interface AppCtx {
   sites: Site[]
