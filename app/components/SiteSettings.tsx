@@ -7,19 +7,28 @@ export default function SiteSettings({ ctx }: { ctx: AppCtx }) {
   const site = ctx.activeSite!
   const [draft, setDraft] = useState<Site>({ ...site, env: { ...site.env } })
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
     setDraft({ ...site, env: { ...site.env } })
-    setSaved(false); setConfirmDelete(false)
+    setSaved(false); setSaveError(null); setConfirmDelete(false)
   }, [site.id])
 
   const setEnv = (key: string, value: string) => setDraft(d => ({ ...d, env: { ...d.env, [key]: value } }))
 
-  const save = () => {
-    ctx.updateSite(draft)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const save = async () => {
+    setSaving(true)
+    setSaveError(null)
+    const result = await ctx.updateSite(draft)
+    setSaving(false)
+    if (result.ok) {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } else {
+      setSaveError(result.error ?? 'Unknown error')
+    }
   }
 
   const field = (key: string, label: string, type = 'text', placeholder = '', isEnv = false) => (
@@ -42,8 +51,9 @@ export default function SiteSettings({ ctx }: { ctx: AppCtx }) {
           <p className="text-xs text-gray-400 mt-0.5">{site.url}</p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={save} className="px-4 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-700 transition-colors">
-            {saved ? '✓ Saved' : 'Save changes'}
+          {saveError && <span className="text-xs text-red-500">Save failed: {saveError}</span>}
+          <button onClick={save} disabled={saving} className="px-4 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors">
+            {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save changes'}
           </button>
           {confirmDelete ? (
               <div className="flex items-center gap-2">

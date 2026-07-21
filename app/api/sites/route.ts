@@ -47,7 +47,10 @@ export async function POST(req: NextRequest) {
 
   // Upsert into Supabase
   const { error } = await supabase.from('sites').upsert({ ...siteToDb(site), user_id: user.id })
-  if (error) console.error('Supabase upsert error:', error)
+  if (error) {
+    console.error('Supabase upsert error:', error)
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+  }
 
   return NextResponse.json({ ok: true, agentRoot: site.agentRoot })
 }

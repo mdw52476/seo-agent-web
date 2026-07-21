@@ -29,7 +29,7 @@ export default function Sitemap({ ctx }: { ctx: AppCtx }) {
         <div>
           <h1 className="text-sm font-semibold text-gray-900">Sitemap — {site.name}</h1>
           <p className="text-xs text-gray-400 mt-0.5">
-            {loading ? 'Loading…' : found ? `${urls.length} page${urls.length === 1 ? '' : 's'} in sitemap.xml` : 'No sitemap found yet'}
+            {loading ? 'Loading…' : found ? 'Live sitemap.xml' : 'No sitemap found yet'}
           </p>
         </div>
         <button
@@ -53,16 +53,25 @@ export default function Sitemap({ ctx }: { ctx: AppCtx }) {
               Sitemaps are created automatically the first time an article or directory is published. Publish something from the Articles or Directories tab, then check back here.
             </p>
           </div>
-        ) : urls.length === 0 ? (
-          <p className="text-sm text-gray-400">sitemap.xml exists but has no URLs yet.</p>
         ) : (
-          <div className="bg-white border border-gray-100 rounded-xl divide-y divide-gray-50 max-w-3xl">
-            {urls.map(url => (
-              <div key={url} className="flex items-center justify-between px-4 py-2.5 gap-4">
-                <span className="text-sm text-gray-700 font-mono truncate">{url}</span>
-                <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline shrink-0">View →</a>
+          <div className="max-w-3xl">
+            <div className="bg-white border border-gray-100 rounded-xl px-5 py-4 mb-4 inline-block">
+              <p className="text-xs text-gray-400 mb-1">Total pages</p>
+              <p className="text-2xl font-semibold text-gray-900">{urls.length}</p>
+            </div>
+
+            {urls.length === 0 ? (
+              <p className="text-sm text-gray-400">sitemap.xml exists but has no URLs yet.</p>
+            ) : (
+              <div className="bg-white border border-gray-100 rounded-xl divide-y divide-gray-50">
+                {urls.map(url => (
+                  <div key={url} className="flex items-center justify-between px-4 py-2.5 gap-4">
+                    <span className="text-sm text-gray-700 font-mono truncate">{url}</span>
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline shrink-0">View →</a>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>

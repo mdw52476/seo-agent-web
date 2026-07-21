@@ -12,7 +12,7 @@ export interface AppCtx {
   setPage: (p: Page) => void
   switchSite: (id: string) => void
   addSite: (site: Site) => Promise<void>
-  updateSite: (site: Site) => void
+  updateSite: (site: Site) => Promise<{ ok: boolean; error?: string }>
   deleteSite: (id: string) => void
   user: { id: string; email: string } | null
   signOut: () => Promise<void>
@@ -64,9 +64,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPage('pipeline')
   }
 
-  const updateSite = (site: Site) => {
+  const updateSite = async (site: Site) => {
     setSites(prev => prev.map(s => s.id === site.id ? site : s))
-    fetch('/api/sites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(site) })
+    const res = await fetch('/api/sites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(site) })
+    const data = await res.json().catch(() => null)
+    if (res.ok && data?.ok !== false) return { ok: true }
+    return { ok: false, error: data?.error ?? `HTTP ${res.status}` }
   }
 
   const deleteSite = (id: string) => {
