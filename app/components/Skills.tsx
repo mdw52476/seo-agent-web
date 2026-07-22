@@ -77,7 +77,7 @@ const FILES: SkillFile[] = [
   {
     name: 'SKILL.md',
     label: 'AI-Tells Rules',
-    description: 'A catalogue of AI writing patterns to scrub — hollow openers, filler phrases, overused adjectives. Applied in the reflection pass after drafting.',
+    description: 'A catalogue of AI writing patterns to scrub — hollow openers, filler phrases, overused adjectives. Applied in the reflection pass after drafting. A strong built-in default is used automatically if you leave this blank — fill this in only if you want to override it for this site.',
     placeholder: "List AI writing patterns to eliminate. For example:\n- Never start with 'In today's...'\n- Remove 'it's worth noting that'\n- No 'not only... but also' constructions\n- Ban: crucial, vital, pivotal, game-changer",
   },
 ]
