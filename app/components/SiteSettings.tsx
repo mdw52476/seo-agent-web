@@ -87,7 +87,9 @@ export default function SiteSettings({ ctx }: { ctx: AppCtx }) {
             <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">GitHub</h2>
             {field('GITHUB_REPO', 'Repository', 'text', 'owner/repo', true)}
             {field('GITHUB_BRANCH', 'Branch', 'text', 'main', true)}
-            {field('GITHUB_CONTENT_PATH', 'Content path', 'text', 'content/posts', true)}
+            <p className="text-xs text-gray-400">
+              Blog posts always publish to <span className="font-mono">content/posts</span> — this is fixed and no longer configurable, so a misconfigured path can't silently send posts to the wrong place.
+            </p>
           </section>
         </div>
       </div>

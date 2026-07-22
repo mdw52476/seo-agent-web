@@ -22,16 +22,11 @@ export default function Articles({ ctx }: { ctx: AppCtx }) {
     fetch(`/api/published?siteId=${encodeURIComponent(site.id)}`).then(r => r.json()).then(d => setArticles(d ?? []))
   }, [site.id, site.agentRoot])
 
-  const publish = useCallback(async () => {
+  const runPublish = useCallback(async (cmd: string) => {
     if (running) return
     readerRef.current?.cancel()
     setRunning(true)
     setLines([])
-
-    const briefArg = brief.trim() ? ` --brief ${JSON.stringify(brief.trim())}` : ''
-    const cmd = brief.trim()
-      ? `publish ${site.url}${briefArg}`
-      : `publish ${site.url} --count ${count}`
 
     const res = await fetch('/api/run', {
       method: 'POST',
@@ -56,7 +51,16 @@ export default function Articles({ ctx }: { ctx: AppCtx }) {
     setRunning(false)
     // Refresh list after publishing
     fetch(`/api/published?siteId=${encodeURIComponent(site.id)}`).then(r => r.json()).then(d => setArticles(d ?? []))
-  }, [running, count, site.agentRoot, site.url])
+  }, [running, site.agentRoot, site.id, site.url, site.siteType, site.env])
+
+  const publishByCount = useCallback(() => {
+    runPublish(`publish ${site.url} --count ${count}`)
+  }, [runPublish, site.url, count])
+
+  const publishBrief = useCallback(() => {
+    if (!brief.trim()) return
+    runPublish(`publish ${site.url} --brief ${JSON.stringify(brief.trim())}`)
+  }, [runPublish, site.url, brief])
 
   const sorted = [...articles].reverse()
 
@@ -79,11 +83,11 @@ export default function Articles({ ctx }: { ctx: AppCtx }) {
           </div>
           <span className="text-xs text-gray-400">{count === 1 ? 'article' : 'articles'}</span>
           <button
-            onClick={publish}
+            onClick={publishByCount}
             disabled={running}
             className="px-4 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
           >
-            {running ? 'Publishing…' : brief.trim() ? 'Publish Brief' : 'Publish'}
+            {running ? 'Publishing…' : 'Publish'}
           </button>
           {running && (
             <button onClick={() => { readerRef.current?.cancel(); setRunning(false) }}
@@ -107,11 +111,18 @@ export default function Articles({ ctx }: { ctx: AppCtx }) {
             rows={3}
             className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 bg-white focus:outline-none focus:border-gray-400 resize-none placeholder:text-gray-300 text-gray-800 leading-relaxed"
           />
-          {brief.trim() && (
-            <p className="text-xs text-blue-500 mt-1.5">
-              Agent will write directly to this brief — keyword research and content planning will be skipped.
+          <div className="flex items-center justify-between mt-1.5">
+            <p className="text-xs text-blue-500">
+              {brief.trim() ? 'Agent will write directly to this brief — keyword research and content planning will be skipped.' : ''}
             </p>
-          )}
+            <button
+              onClick={publishBrief}
+              disabled={running || !brief.trim()}
+              className="shrink-0 px-4 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-700 disabled:opacity-40 transition-colors"
+            >
+              {running ? 'Publishing…' : 'Publish Brief'}
+            </button>
+          </div>
         </div>
       </div>
 

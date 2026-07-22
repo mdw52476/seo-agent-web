@@ -110,6 +110,7 @@ export async function POST(req: NextRequest) {
       // (ephemeral filesystem wipes ~/.seo-agent on every deploy)
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? ''
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? ''
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
       const userEnvLines = Object.entries(requestEnv ?? {})
         .filter(([, v]) => v)
         .map(([k, v]) => `${k}=${v}`)
@@ -121,6 +122,7 @@ export async function POST(req: NextRequest) {
         siteId   ? `SITE_ID=${siteId}`     : '',
         supabaseUrl ? `SUPABASE_URL=${supabaseUrl}` : '',
         supabaseKey ? `SUPABASE_ANON_KEY=${supabaseKey}` : '',
+        supabaseServiceKey ? `SUPABASE_SERVICE_ROLE_KEY=${supabaseServiceKey}` : '',
       ].filter(Boolean).join('\n') + '\n'
       fs.writeFileSync(path.join(agentRoot, '.env'), envContent)
 

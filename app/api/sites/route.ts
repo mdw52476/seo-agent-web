@@ -33,6 +33,9 @@ export async function POST(req: NextRequest) {
   const siteType     = site.siteType ?? 'nextjs'
   const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? ''
   const supabaseKey  = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? ''
+  // Service role key -- lets the CLI's own direct writes (logArticle, logAuditReport,
+  // logContentPlan) bypass RLS, since that process has no user session of its own.
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
 
   fs.mkdirSync(site.agentRoot, { recursive: true })
   fs.writeFileSync(
@@ -42,7 +45,8 @@ export async function POST(req: NextRequest) {
     '\nSITE_TYPE=' + siteType +
     '\nSITE_ID=' + site.id +
     '\nSUPABASE_URL=' + supabaseUrl +
-    '\nSUPABASE_ANON_KEY=' + supabaseKey + '\n'
+    '\nSUPABASE_ANON_KEY=' + supabaseKey +
+    '\nSUPABASE_SERVICE_ROLE_KEY=' + supabaseServiceKey + '\n'
   )
 
   // Upsert into Supabase
