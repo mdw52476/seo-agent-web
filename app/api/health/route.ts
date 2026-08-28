@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server'
 
+// Force this to actually re-run per request -- a route with no dynamic
+// behavior can otherwise get statically evaluated once and cached, which
+// would make this diagnostic report stale/wrong env-var state forever.
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   // Booleans only, never values -- lets us confirm a Railway variable actually
   // reached the running container without exposing any secret.
